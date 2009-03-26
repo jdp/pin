@@ -1,0 +1,53 @@
+State 0:
+          pin ::= * words
+          words ::= * word
+          words ::= * words word
+          word ::= * IDENT
+          word ::= * NUMBER
+
+                         IDENT shift  3
+                        NUMBER shift  4
+                           pin accept
+                         words shift  1
+                          word shift  5
+
+State 1:
+      (0) pin ::= words *
+          words ::= words * word
+          word ::= * IDENT
+          word ::= * NUMBER
+
+                             $ reduce 0
+                         IDENT shift  3
+                        NUMBER shift  4
+                          word shift  2
+
+State 2:
+      (2) words ::= words word *
+
+                     {default} reduce 2
+
+State 3:
+      (3) word ::= IDENT *
+
+                     {default} reduce 3
+
+State 4:
+      (4) word ::= NUMBER *
+
+                     {default} reduce 4
+
+State 5:
+      (1) words ::= word *
+
+                     {default} reduce 1
+
+----------------------------------------------------
+Symbols:
+    0: $:
+    1: IDENT
+    2: NUMBER
+    3: error:
+    4: pin: IDENT NUMBER
+    5: words: IDENT NUMBER
+    6: word: IDENT NUMBER
