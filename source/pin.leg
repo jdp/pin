@@ -1,0 +1,43 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "pin.h"
+
+/* Current line number */
+static int yylineno;
+
+/* Populate this with the code to compile */
+static char *codebuf;
+
+/* Send input to yyparse from codebuf instead of stdin */
+#define YY_INPUT(buf, result, max_size) { \
+	int yyc; \
+	if (codebuf && *codebuf != '\0') \
+		yyc= *codebuf++; \
+	else \
+		yyc= EOF; \
+	result= (EOF == yyc) ? 0 : (*(buf)= yyc, 1); \
+}
+
+%}
+
+pin   = - ident* eof { printf("ok\n"); exit(1); }
+
+ident = < [A-Za-z]+ > - { printf("ident `%s'\n", yytext); }
+
+-     = space*
+space = ' ' | '\t' | eol
+eol   = '\r\n' | '\r' | '\n'
+eof   = !.
+
+%%
+
+int PinDo(char *code)
+{
+	codebuf = code;
+	yylineno = 1;
+	while (yyparse());
+	codebuf = 0;
+	return 0;
+}
