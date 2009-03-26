@@ -9,10 +9,10 @@ LEMON = lemon
 
 OUT = pin
 
-$(OUT): $(OBJ)
+$(OUT): $(OBJ) grammar.h
 	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIBS)
 
-grammar.c: grammar.y
+grammar.c:
 	$(LEMON) grammar.y
 	$(CC) $(CFLAGS) -c $@
 
