@@ -1,0 +1,9 @@
+digraph exampleConcatenativeLanguage {
+	//node [color=lightgreen, style=filled];
+	"69" -> "420";
+	"420" -> "+";
+	"+" -> "[Quotation]";
+	"[Quotation]" -> "42";
+	"42" -> "13";
+	"[Quotation]" -> "dup";
+}
