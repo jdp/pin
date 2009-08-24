@@ -1,4 +1,4 @@
-SRC = pin.c parser.c
+SRC = pin.c internal.c parser.c
 OBJ = ${SRC:.c=.o}
 CC = gcc
 LEG = leg
@@ -8,10 +8,9 @@ $(OUT): $(OBJ)
 	$(CC) -o $@ $(OBJ)
 
 parser.c: pin.leg
-	rm parser.c
 	$(LEG) pin.leg -o $@
 	
-.c.o:
+.c.o: pin.h
 	$(CC) -c $<
 	
 clean:
