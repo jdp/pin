@@ -1,0 +1,95 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "pin.h"
+
+/* Current line number */
+static int yylineno;
+
+/* Populate this with the code to compile */
+static char* codebuf;
+
+/* Pin context handlers */
+static PIN_CONTEXT* context;
+static PIN_CONTEXT* contexts[64];
+static int context_depth;
+
+static PIN_AST_NODE* quote;
+
+/* Send input to yyparse from codebuf instead of stdin */
+#define YY_INPUT(buf, result, max_size) {        \
+	int yyc;                                     \
+	if (codebuf && *codebuf != '\0')             \
+		yyc= *codebuf++;                         \
+	else                                         \
+		yyc= EOF;                                \
+	result= (EOF == yyc) ? 0 : (*(buf)= yyc, 1); \
+}
+
+#define PIN_FINISH() printf("ok\n")
+#define PIN_ERROR(E) PinError(1, yylineno, E)
+
+#define NODE(T,R) PinAddNode(context, PINT_##T, R)
+
+%}
+
+pin       = word+ eof                 { PIN_FINISH(); }
+          | < .+ >                    { PIN_ERROR("Parse error"); }
+          ;
+word      = ident
+          | number
+          | quotation
+          ;
+quotation = l-bracket word* r-bracket
+
+l-bracket = '['            -          { quote = NODE(QUOTATION, "["); contexts[++context_depth] = (PIN_CONTEXT*)quote->quotation; context = contexts[context_depth]; }
+r-bracket = ']'            -          { context = contexts[--context_depth]; }
+ident     = < [A-Za-z]+ >  -          { NODE(IDENT, yytext); }
+number    = < '-'?[0-9]+ > -          { NODE(NUMBER, yytext); }
+
+-         = space*
+space     = [ \t] | eol 
+eol       = ('\r\n' | '\r' | '\n')    { yylineno++; }
+eof       = !.
+
+%%
+
+void PinTree(PIN_CONTEXT* ctx, int depth) {
+	PIN_AST_NODE* node;
+	node = ctx->node_head;
+	while (node != NULL) {
+		if (node->type == PINT_QUOTATION) {
+			printf("[ ");
+			PinTree((PIN_CONTEXT*)node->quotation, depth+1);
+			printf("] ");
+		}
+		else {
+			printf("%s ", node->repr);
+		}
+		node = node->next;
+	}
+}
+
+PIN_CONTEXT* PinDo(char *code) {
+	/* Manage context stack */
+	contexts[0] = PinNew();
+	context = contexts[0];
+	context_depth = 0;
+	/* Parse code */
+	codebuf = code;
+	yylineno = 1;
+	while (yyparse());
+	codebuf = 0;
+	/* Validate and print out AST */
+	context->nodes = context->node_head;
+	if (context->nodes == NULL) {
+		printf("I fucked up!\n");
+	}
+	else {
+		PinTree(context, 0);
+		printf("\n");
+	}
+	return context;
+}
+
