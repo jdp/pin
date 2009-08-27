@@ -35,9 +35,9 @@ typedef struct {
 	PIN_AST_NODE* elements;
 } PIN_STACK;
 
-typedef struct {
+typedef struct context_t {
+	struct context_t* parent;
 	PIN_DICT dictionary;
-	PIN_STACK* stack;
 	PIN_AST_NODE* nodes;
 	PIN_AST_NODE* node_head;
 	PIN_AST_NODE* node_tail;

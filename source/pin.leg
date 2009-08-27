@@ -10,11 +10,8 @@ static int yylineno;
 /* Populate this with the code to compile */
 static char* codebuf;
 
-/* Pin context handlers */
+/* Pin current context pointer */
 static PIN_CONTEXT* context;
-static PIN_CONTEXT* contexts[64];
-static int context_depth;
-
 static PIN_AST_NODE* quote;
 
 /* Send input to yyparse from codebuf instead of stdin */
@@ -43,8 +40,8 @@ word      = ident
           ;
 quotation = l-bracket word* r-bracket
 
-l-bracket = '['            -          { quote = NODE(QUOTATION, "["); contexts[++context_depth] = (PIN_CONTEXT*)quote->quotation; context = contexts[context_depth]; }
-r-bracket = ']'            -          { context = contexts[--context_depth]; }
+l-bracket = '['            -          { quote = NODE(QUOTATION, "["); context = (PIN_CONTEXT*)quote->quotation; }
+r-bracket = ']'            -          { context = context->parent; }
 ident     = < [A-Za-z]+ >  -          { NODE(IDENT, yytext); }
 number    = < '-'?[0-9]+ > -          { NODE(NUMBER, yytext); }
 
@@ -73,7 +70,7 @@ void PinTree(PIN_CONTEXT* ctx, int depth) {
 
 PIN_CONTEXT* PinDo(char *code) {
 	/* Manage context stack */
-	contexts[0] = PinNew();
+	contexts[0] = PinNew(NULL);
 	context = contexts[0];
 	context_depth = 0;
 	/* Parse code */
