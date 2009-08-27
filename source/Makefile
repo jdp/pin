@@ -1,4 +1,4 @@
-SRC = pin.c internal.c parser.c
+SRC = pin.c ast.c stack.c grammar.c interpret.c
 OBJ = ${SRC:.c=.o}
 CC = gcc
 LEG = leg
@@ -7,15 +7,15 @@ OUT = pin
 $(OUT): $(OBJ)
 	$(CC) -o $@ $(OBJ)
 
-parser.c: pin.leg
-	$(LEG) pin.leg -o $@
+grammar.c: grammar.leg
+	$(LEG) grammar.leg -o $@
 	
 .c.o: pin.h
 	$(CC) -c $<
 	
 clean:
 	rm *.o
-	rm parser.c
+	rm grammar.c
 	rm pin
 	
 PHONY: clean

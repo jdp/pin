@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "pin.h"
+#include "stack.h"
+#include "ast.h"
 
 /* Current line number */
 static int yylineno;
@@ -28,6 +30,8 @@ static PIN_AST_NODE* quote;
 #define PIN_ERROR(E) PinError(1, yylineno, E)
 
 #define NODE(T,R) PinAddNode(context, PINT_##T, R)
+#define QUOTE()   quote = NODE(QUOTATION, "["); context = (PIN_CONTEXT*)quote->quotation
+#define UNQUOTE() context = context->parent
 
 %}
 
@@ -40,8 +44,8 @@ word      = ident
           ;
 quotation = l-bracket word* r-bracket
 
-l-bracket = '['            -          { quote = NODE(QUOTATION, "["); context = (PIN_CONTEXT*)quote->quotation; }
-r-bracket = ']'            -          { context = context->parent; }
+l-bracket = '['            -          { QUOTE(); }
+r-bracket = ']'            -          { UNQUOTE(); }
 ident     = < [A-Za-z]+ >  -          { NODE(IDENT, yytext); }
 number    = < '-'?[0-9]+ > -          { NODE(NUMBER, yytext); }
 
@@ -70,22 +74,23 @@ void PinTree(PIN_CONTEXT* ctx, int depth) {
 
 PIN_CONTEXT* PinDo(char *code) {
 	/* Manage context stack */
-	contexts[0] = PinNew(NULL);
-	context = contexts[0];
-	context_depth = 0;
+	context = PinNew(NULL);
 	/* Parse code */
 	codebuf = code;
 	yylineno = 1;
 	while (yyparse());
 	codebuf = 0;
 	/* Validate and print out AST */
-	context->nodes = context->node_head;
-	if (context->nodes == NULL) {
+	PIN_AST_NODE* node;
+	node = context->node_head;
+	if (node == NULL) {
 		printf("I fucked up!\n");
 	}
 	else {
 		PinTree(context, 0);
 		printf("\n");
+		PIN_STACK* stack = PinStack_new(50);
+		PinEvaluate(context, stack);
 	}
 	return context;
 }

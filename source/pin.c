@@ -4,30 +4,33 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 #include "pin.h"
+#include "ast.h"
+#include "stack.h"
 
 /* Opens a file and interprets it */
-int PinDoFile(char *filename) {
+PIN_CONTEXT* PinDoFile(char *filename) {
+	PIN_CONTEXT* ctx;
 	FILE *fp;
 	struct stat fstats;
 	
 	if(stat(filename, &fstats) == -1) {
 		fprintf(stderr, "Couldn't stat `%s'\n", filename);
-		return 0;
+		return NULL;
 	}
 	if ((fp = fopen(filename, "rb")) == NULL) {
 		fprintf(stderr, "Couldn't open `%s'\n", filename);
-		return 0;
+		return NULL;
 	}
 	char *source = (char *)malloc(sizeof(char)*fstats.st_size+1);
 	memset(source, '\0', sizeof(char)*fstats.st_size+1);
 	if (fread(source, 1, fstats.st_size, fp) != fstats.st_size) {
 		fprintf(stderr, "Error reading `%s'\n", filename);
-		return 0;
+		return NULL;
 	}
 	//source[fstats.st_size-1] = '\0'; /* peg fucks up on 0d 0a eof's */
-	PinDo(source);
+	ctx = PinDo(source);
 	free(source);
-	return 1;
+	return ctx;
 }
 
 /* Prints an error message and then quits */

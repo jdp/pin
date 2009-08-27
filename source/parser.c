@@ -16,11 +16,8 @@ static int yylineno;
 /* Populate this with the code to compile */
 static char* codebuf;
 
-/* Pin context handlers */
+/* Pin current context pointer */
 static PIN_CONTEXT* context;
-static PIN_CONTEXT* contexts[64];
-static int context_depth;
-
 static PIN_AST_NODE* quote;
 
 /* Send input to yyparse from codebuf instead of stdin */
@@ -37,6 +34,8 @@ static PIN_AST_NODE* quote;
 #define PIN_ERROR(E) PinError(1, yylineno, E)
 
 #define NODE(T,R) PinAddNode(context, PINT_##T, R)
+#define QUOTE()   quote = NODE(QUOTATION, "["); context = (PIN_CONTEXT*)quote->quotation
+#define UNQUOTE() context = context->parent
 
 
 #ifndef YY_VARIABLE
@@ -279,12 +278,12 @@ YY_ACTION(void) yy_1_ident(char *yytext, int yyleng)
 YY_ACTION(void) yy_1_r_bracket(char *yytext, int yyleng)
 {
   yyprintf((stderr, "do yy_1_r_bracket\n"));
-   context = contexts[--context_depth]; ;
+   UNQUOTE(); ;
 }
 YY_ACTION(void) yy_1_l_bracket(char *yytext, int yyleng)
 {
   yyprintf((stderr, "do yy_1_l_bracket\n"));
-   quote = NODE(QUOTATION, "["); contexts[++context_depth] = (PIN_CONTEXT*)quote->quotation; context = contexts[context_depth]; ;
+   QUOTE(); ;
 }
 YY_ACTION(void) yy_2_pin(char *yytext, int yyleng)
 {
@@ -511,9 +510,7 @@ void PinTree(PIN_CONTEXT* ctx, int depth) {
 
 PIN_CONTEXT* PinDo(char *code) {
 	/* Manage context stack */
-	contexts[0] = PinNew();
-	context = contexts[0];
-	context_depth = 0;
+	context = PinNew(NULL);
 	/* Parse code */
 	codebuf = code;
 	yylineno = 1;

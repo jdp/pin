@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "pin.h"
+#include "ast.h"
 
 /* Returns a new Pin context */
 PIN_CONTEXT* PinNew(PIN_CONTEXT* parent) {
@@ -14,7 +15,6 @@ PIN_CONTEXT* PinNew(PIN_CONTEXT* parent) {
 	context->parent = parent;
 	context->node_head = NULL;
 	context->node_tail = NULL;
-	context->nodes = NULL;
 	return context;
 }
 
@@ -33,6 +33,7 @@ PIN_AST_NODE* PinAddNode(PIN_CONTEXT* ctx, PIN_TYPE type, char* repr) {
 	else {
 		node->quotation = NULL;
 	}
+	node->previous = NULL;
 	node->next = NULL;
 	node->repr = (char*)malloc(sizeof(char)*strlen(repr));
 	strcpy(node->repr, repr);
@@ -42,6 +43,7 @@ PIN_AST_NODE* PinAddNode(PIN_CONTEXT* ctx, PIN_TYPE type, char* repr) {
 	else {
 		ctx->node_tail->next = node;
 	}
+	node->previous = ctx->node_tail;
 	ctx->node_tail = node;
 	return node;
 }
