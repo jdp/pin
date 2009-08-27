@@ -3,19 +3,6 @@
 
 typedef unsigned long PIN_ITEM;
 
-typedef struct {
-	char *repr;
-} PIN_WORD;
-
-typedef struct {
-	char *repr;
-	double value;
-} PIN_NUMBER;
-
-typedef struct {
-	PIN_ITEM* items;
-} PIN_QUOTATION;
-
 typedef enum {
 	PINT_IDENT,
 	PINT_NUMBER,
